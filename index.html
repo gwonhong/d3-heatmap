@@ -15,12 +15,28 @@
   <!-- upload csv file -->
   <input id="input" type="file" accept=".csv">
 
-  <!-- heatmap graph will take place here -->
-  <div id="heatmap"></div>
+  <div id="buttons"></div> <br>
+
+  <!-- graph will take place here -->
+  <div id="graph"></div>
 
   <script>
+    // set the dimensions and margins of the graph
+    var margin = { top: 30, right: 30, bottom: 30, left: 30 },
+      width = 450 - margin.left - margin.right,
+      height = 450 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    var svg = d3.select("#graph")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",
+        "translate(" + margin.left + "," + margin.top + ")");
+
     //handle input csv file
-    var input = document.getElementById('input');
+    var input = document.getElementById("input");
     input.onchange = function () {
       var fileList = input.files;
 
@@ -29,13 +45,65 @@
       reader.readAsText(fileList[0]);
 
       //로드 한 후
+      var data;
       reader.onload = function () {
         data = d3.csvParse(reader.result, d3.autoType);
-        
-        //x y z의 범위부터 찾아서 scaling에 쓰기
-        console.log(d3.extent(data, d => d.x));
-        console.log(d3.extent(data, d => d.y));
-        console.log(d3.extent(data, d => d.z));
+
+        //make buttons to select graph option
+        var buttons = document.getElementById("buttons");
+
+        //draw xz graph
+        var xz = document.createElement("button");
+        xz.innerHTML = "XZ";
+        xz.addEventListener("click", () => {
+          drawGraph();
+        })
+        buttons.appendChild(xz);
+
+        var yz = document.createElement("button");
+        yz.innerHTML = "YZ";
+        yz.addEventListener("click", () => {
+          drawGraph();
+        })
+        buttons.appendChild(yz);
+      };
+
+
+
+      function drawGraph() {
+        // Build X scales and axis:
+        var x = d3.scaleBand()
+          .range([0, width])
+          .domain(data.map(d => d.x))
+          .padding(0.01);
+
+        svg.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x));
+
+        // Build Y scales and axis:
+        var y = d3.scaleBand()
+          .range([height, 0])
+          .domain(data.map(d => d.y))
+          .padding(0.01);
+
+        svg.append("g")
+          .call(d3.axisLeft(y));
+
+        // Build color scale
+        var myColor = d3.scaleLinear()
+          .range(["white", "#69b3a2"])
+          .domain([1, 100])
+
+        svg.selectAll()
+          .data(data, function (d) { return d.group + ':' + d.variable; })
+          .enter()
+          .append("rect")
+          .attr("x", function (d) { return x(d.group) })
+          .attr("y", function (d) { return y(d.variable) })
+          .attr("width", x.bandwidth())
+          .attr("height", y.bandwidth())
+          .style("fill", function (d) { return myColor(d.value) })
       };
     }
   </script>
