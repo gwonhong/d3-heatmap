@@ -3,14 +3,38 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>d3 Heatmap</title>
+
+  <!-- load d3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script> const div = d3.selectAll("div");</script>
 </head>
 
 <body>
-  <script type="module">
-    import * as d3 from "https://cdn.skypack.dev/d3@7";
-    const div = d3.selectAll("div");
+
+  <!-- upload csv file -->
+  <input id="input" type="file" accept=".csv">
+
+  <!-- heatmap graph will take place here -->
+  <div id="heatmap"></div>
+
+  <script>
+    //handle input csv file
+    var input = document.getElementById('input');
+    input.onchange = function () {
+      var fileList = input.files;
+
+      // 읽기
+      var reader = new FileReader();
+      reader.readAsText(fileList[0]);
+
+      //로드 한 후
+      reader.onload = function () {
+        console.log(d3.csvParse(reader.result));
+      };
+    }
   </script>
+
 </body>
 
 </html>
