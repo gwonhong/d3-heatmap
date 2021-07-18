@@ -30,7 +30,12 @@
 
       //로드 한 후
       reader.onload = function () {
-        console.log(d3.csvParse(reader.result));
+        data = d3.csvParse(reader.result, d3.autoType);
+        
+        //x y z의 범위부터 찾아서 scaling에 쓰기
+        console.log(d3.extent(data, d => d.x));
+        console.log(d3.extent(data, d => d.y));
+        console.log(d3.extent(data, d => d.z));
       };
     }
   </script>
