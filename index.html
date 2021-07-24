@@ -5,114 +5,127 @@
   <meta charset="utf-8">
   <title>d3 Heatmap</title>
 
-  <!-- load d3.js -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script> const div = d3.selectAll("div");</script>
+
 </head>
 
 <body>
-
-  <!-- upload csv file -->
-  <input id="input" type="file" accept=".csv">
-
-  <div id="buttons"></div> <br>
+  <!-- make random array with 100 numbers -->
+  <button id="random">Generate random 3d array</button><br>
+  <div id="options"></div>
 
   <!-- graph will take place here -->
   <div id="graph"></div>
 
   <script>
-    // set the dimensions and margins of the graph
-    var margin = { top: 80, right: 25, bottom: 30, left: 40 },
-      width = 450,
-      height = 450;
+    const div = d3.selectAll("div");
 
-    // append the svg object to the body of the page
-    var svg = d3.select("#graph")
-      .append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-      .attr("transform",
-        "translate(" + margin.left + "," + margin.top + ")");
+    //generate random 3d array with 100 elements
+    let randomArray = [];
+    let randomButton = document.getElementById("random");
+    let isFirst = true;
+    randomButton.addEventListener("click", () => {
+      for (let i = 0; i < 100; i++) {
+        let x = Math.floor(Math.random() * 100) / 10; //0~10의 한자리 랜덤 소수
+        let y = Math.floor(Math.random() * 100) / 10;
+        let z = Math.floor(Math.random() * 100) / 10;
+        randomArray.push({ x, y, z });
+      }
+      console.log(randomArray);
 
-    //handle input csv file
-    var input = document.getElementById("input");
-    input.onchange = function () {
-      var fileList = input.files;
 
-      //file read as text
-      var reader = new FileReader();
-      reader.readAsText(fileList[0]);
-
-      //after file loaded
-      var data;
-      reader.onload = function () {
-        data = d3.csvParse(reader.result, d3.autoType);
-
+      if (isFirst) {
         //make buttons to select graph option
-        var buttons = document.getElementById("buttons");
+        let options = document.getElementById("options");
 
         //draw xz graph
-        var option1 = document.createElement("button");
-        option1.innerHTML = "XZ";
+        let option1 = document.createElement("button");
+        option1.innerHTML = "X";
         option1.addEventListener("click", () => {
-          drawGraph();
+          drawHistogram("x");
         })
-        buttons.appendChild(option1);
+        options.appendChild(option1);
 
-        var option2 = document.createElement("button");
-        option2.innerHTML = "YZ";
+        let option2 = document.createElement("button");
+        option2.innerHTML = "Y";
         option2.addEventListener("click", () => {
-          drawGraph();
+          drawHistogram("y");
         })
-        buttons.appendChild(option2);
+        options.appendChild(option2);
 
-        var option3 = document.createElement("button");
-        option3.innerHTML = "heatmap";
+        let option3 = document.createElement("button");
+        option3.innerHTML = "Z";
         option3.addEventListener("click", () => {
-          drawGraph();
+          drawHistogram("z");
         })
-        buttons.appendChild(option3);
-      };
+        options.appendChild(option3);
+
+      }
+      isFirst = false;
+    });
 
 
-      //우선은 x, y 범위가 0~10이라고 가정
-      function drawGraph() {
-        // Build X scales and axis:
-        var x = d3.scaleLinear()
-          .domain([0, 10])
-          .range([margin.left, width - margin.right])
 
-        xAxis = g => g
-          .attr("transform", `translate(0,${height - margin.bottom})`)
-          .call(d3.axisBottom(x))
+    // set the dimensions and margins of the graph
+    let margin = { top: 20, right: 20, bottom: 30, left: 40 };
+    let height = 500, width = 1000;
+    let color = "steelblue";
 
-        svg.append("g")
-          .call(xAxis)
+    // append the svg object to the body of the page
+    let svg = d3.select("#graph")
+      .attr("viewBox", [0, 0, width, height]);
 
 
-        // Build Y scales and axis:
-        var y = d3.scaleLinear()
-          .domain([0, 10])
-          .range([height - margin.bottom, margin.top])
+    function drawHistogram(op) {
+      let data = randomArray.map(d => d[op]);
+      let bins = d3.bin()(data);
+      console.log(bins);
 
-        yAxis = g => g
-          .attr("transform", `translate(${margin.left},0)`)
-          .call(d3.axisLeft(y))
+      let x = d3.scaleLinear()
+        .domain([bins[0].x0, bins[bins.length - 1].x1])
+        .range([margin.left, width - margin.right]);
 
-        svg.append("g")
-          .call(yAxis);
-
-        // Build color scale
-        var myColor = d3.scaleSequential()
-          .interpolator(d3.interpolateInferno)
-          .domain([1, 100])
-
-        // add the squares
+      let y = d3.scaleLinear()
+        .domain([0, d3.max(bins, d => d.length)]).nice()
+        .range([height - margin.bottom, margin.top]);
 
 
-      };
-    }
+      svg.append("g")
+        .attr("fill", color)
+        .selectAll("rect")
+        .data(bins)
+        .join("rect")
+        .attr("x", d => x(d.x0) + 1)
+        .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
+        .attr("y", d => y(d.length))
+        .attr("height", d => y(0) - y(d.length));
+
+
+      let xAxis = g => g
+        .attr("transform", `translate(0,${height - margin.bottom})`)
+        .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
+        .call(g => g.append("text")
+          .attr("x", width - margin.right)
+          .attr("y", -4)
+          .attr("fill", "currentColor")
+          .attr("font-weight", "bold")
+          .attr("text-anchor", "end")
+          .text(data.x));
+      svg.append("g")
+        .call(xAxis);
+
+      let yAxis = g => g
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y).ticks(height / 40))
+        .call(g => g.select(".domain").remove())
+        .call(g => g.select(".tick:last-of-type text").clone()
+          .attr("x", 4)
+          .attr("text-anchor", "start")
+          .attr("font-weight", "bold")
+          .text(data.y));
+      svg.append("g")
+        .call(yAxis);
+    };
   </script>
 
 </body>
