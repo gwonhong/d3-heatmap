@@ -67,64 +67,58 @@
 
 
     // set the dimensions and margins of the graph
-    let margin = { top: 20, right: 20, bottom: 30, left: 40 };
-    let height = 500, width = 1000;
-    let color = "steelblue";
+    const margin = { top: 10, right: 30, bottom: 30, left: 40 },
+      width = 460 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
 
     // append the svg object to the body of the page
-    let svg = d3.select("#graph")
-      .attr("viewBox", [0, 0, width, height]);
+    const svg = d3.select("#graph")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform",
+        `translate(${margin.left},${margin.top})`);
 
 
     function drawHistogram(op) {
-      let data = randomArray.map(d => d[op]);
-      let bins = d3.bin()(data);
+      // X axis: scale and draw:
+      const x = d3.scaleLinear()
+        .domain([0, 10])     //simply set 0 to 10
+        .range([0, width]);
+
+      svg.append("g")
+        .attr("transform", `translate(0, ${height})`)
+        .call(d3.axisBottom(x));
+
+      // set the parameters for the histogram
+      const histogram = d3.histogram()
+        .value(function (d) { return d[op]; })   // binning을 할건데, 무슨 값을 기준으로 binning 할지 고를 수 있게 해줌
+        .domain(x.domain())  // then the domain of the graphic
+        .thresholds(10); // then the numbers of bins :default = x.ticks(70)
+
+      // And apply this function to data to get the bins
+      const bins = histogram(randomArray);
       console.log(bins);
 
-      let x = d3.scaleLinear()
-        .domain([bins[0].x0, bins[bins.length - 1].x1])
-        .range([margin.left, width - margin.right]);
-
-      let y = d3.scaleLinear()
-        .domain([0, d3.max(bins, d => d.length)]).nice()
-        .range([height - margin.bottom, margin.top]);
-
+      // Y axis: scale and draw:
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(bins, d => d.length)]) // 이것 때문에 d3.histogram has to be called before the Y axis obviously
+        .range([height, 0]);
 
       svg.append("g")
-        .attr("fill", color)
-        .selectAll("rect")
+        .call(d3.axisLeft(y));
+
+      // append the bar rectangles to the svg element
+      svg.selectAll("rect")
         .data(bins)
         .join("rect")
-        .attr("x", d => x(d.x0) + 1)
-        .attr("width", d => Math.max(0, x(d.x1) - x(d.x0) - 1))
-        .attr("y", d => y(d.length))
-        .attr("height", d => y(0) - y(d.length));
+        .attr("x", 1)
+        .attr("transform", function (d) { return `translate(${x(d.x0)} , ${y(d.length)})` })
+        .attr("width", function (d) { return x(d.x1) - x(d.x0) - 1 })
+        .attr("height", function (d) { return height - y(d.length); })
+        .style("fill", "#69b3a2")
 
-
-      let xAxis = g => g
-        .attr("transform", `translate(0,${height - margin.bottom})`)
-        .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0))
-        .call(g => g.append("text")
-          .attr("x", width - margin.right)
-          .attr("y", -4)
-          .attr("fill", "currentColor")
-          .attr("font-weight", "bold")
-          .attr("text-anchor", "end")
-          .text(data.x));
-      svg.append("g")
-        .call(xAxis);
-
-      let yAxis = g => g
-        .attr("transform", `translate(${margin.left},0)`)
-        .call(d3.axisLeft(y).ticks(height / 40))
-        .call(g => g.select(".domain").remove())
-        .call(g => g.select(".tick:last-of-type text").clone()
-          .attr("x", 4)
-          .attr("text-anchor", "start")
-          .attr("font-weight", "bold")
-          .text(data.y));
-      svg.append("g")
-        .call(yAxis);
     };
   </script>
 
