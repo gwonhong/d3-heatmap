@@ -4,9 +4,6 @@
 <head>
   <meta charset="utf-8">
   <title>d3 Heatmap</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-
 </head>
 
 <body>
@@ -17,6 +14,10 @@
   <!-- graph will take place here -->
   <div id="graph"></div>
 
+  <!-- I had to use d3.v4 since rectbin is not compatible with newer version -->
+  <script src="https://d3js.org/d3.v4.js"></script>
+  <script src="https://cdn.rawgit.com/fabid/d3-rectbin/master/rectbin.js"></script>
+
   <script>
     const div = d3.selectAll("div");
 
@@ -25,8 +26,8 @@
     let randomButton = document.getElementById("random");
     let isFirst = true;
     randomButton.addEventListener("click", () => {
-      for (let i = 0; i < 100; i++) {
-        let x = Math.floor(Math.random() * 100) / 10; //0~10의 한자리 랜덤 소수
+      for (let i = 0; i < 1000; i++) {
+        let x = Math.floor(Math.random() * 100) / 10; //0~10의 무작위 한자리 소수
         let y = Math.floor(Math.random() * 100) / 10;
         let z = Math.floor(Math.random() * 100) / 10;
         randomArray.push({ x, y, z });
@@ -38,28 +39,12 @@
         //make buttons to select graph option
         let options = document.getElementById("options");
 
-        //draw xz graph
-        let option1 = document.createElement("button");
-        option1.innerHTML = "X";
-        option1.addEventListener("click", () => {
-          drawHistogram("x");
-        })
-        options.appendChild(option1);
-
-        let option2 = document.createElement("button");
-        option2.innerHTML = "Y";
-        option2.addEventListener("click", () => {
-          drawHistogram("y");
-        })
-        options.appendChild(option2);
-
-        let option3 = document.createElement("button");
-        option3.innerHTML = "Z";
-        option3.addEventListener("click", () => {
-          drawHistogram("z");
-        })
-        options.appendChild(option3);
-
+        let option4 = document.createElement("button");
+        option4.innerHTML = "heatmap?";
+        option4.addEventListener("click", () => {
+          drawHeatmap(randomArray);
+        });
+        options.appendChild(option4);
       }
       isFirst = false;
     });
@@ -80,46 +65,73 @@
       .attr("transform",
         `translate(${margin.left},${margin.top})`);
 
+    function drawHeatmap(data) {
 
-    function drawHistogram(op) {
-      // X axis: scale and draw:
-      const x = d3.scaleLinear()
-        .domain([0, 10])     //simply set 0 to 10
+      let xExtent = d3.extent(data, d => d.x);
+      let yExtent = d3.extent(data, d => d.y);
+
+      //X axis
+      let x = d3.scaleLinear()
+        .nice()
+        .domain(xExtent)
         .range([0, width]);
 
       svg.append("g")
         .attr("transform", `translate(0, ${height})`)
         .call(d3.axisBottom(x));
 
-      // set the parameters for the histogram
-      const histogram = d3.histogram()
-        .value(function (d) { return d[op]; })   // binning을 할건데, 무슨 값을 기준으로 binning 할지 고를 수 있게 해줌
-        .domain(x.domain())  // then the domain of the graphic
-        .thresholds(10); // then the numbers of bins :default = x.ticks(70)
-
-      // And apply this function to data to get the bins
-      const bins = histogram(randomArray);
-      console.log(bins);
-
-      // Y axis: scale and draw:
-      const y = d3.scaleLinear()
-        .domain([0, d3.max(bins, d => d.length)]) // 이것 때문에 d3.histogram has to be called before the Y axis obviously
+      //Y axis
+      let y = d3.scaleLinear()
+        .nice()
+        .domain(yExtent)
         .range([height, 0]);
 
       svg.append("g")
         .call(d3.axisLeft(y));
 
-      // append the bar rectangles to the svg element
-      svg.selectAll("rect")
-        .data(bins)
-        .join("rect")
-        .attr("x", 1)
-        .attr("transform", function (d) { return `translate(${x(d.x0)} , ${y(d.length)})` })
-        .attr("width", function (d) { return x(d.x1) - x(d.x0) - 1 })
-        .attr("height", function (d) { return height - y(d.length); })
-        .style("fill", "#69b3a2")
+      // Reformat the data: d3.rectbin() needs a specific format
+      let inputForRectBinning = [];
+      data.forEach(d => {
+        inputForRectBinning.push([+d.x, +d.y])  // Note that we had the transform value of X and Y !
+      });
 
-    };
+      // Compute the rectbin
+      let size = 0.5;
+      let rectbinData = d3.rectbin()
+        .dx(size)
+        .dy(size)
+        (inputForRectBinning);
+
+      // Prepare a color palette
+      let color = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.y)]) // in proportion to z value
+        .range(["transparent", "#69a3b2"])
+
+      // What is the width of a square in px?
+      let widthInPx = x(xExtent[0] + size);
+
+      // What is the height of a square in px?
+      let heightInPx = y(yExtent[1] - size);
+
+      // Now we can add the squares
+      svg.append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("width", width)
+        .attr("height", height)
+      svg.append("g")
+        .attr("clip-path", "url(#clip)")
+        .selectAll("myRect")
+        .data(rectbinData)
+        .enter().append("rect")
+        .attr("x", function (d) { return x(d.x) })
+        .attr("y", function (d) { return y(d.y) - heightInPx })
+        .attr("width", widthInPx)
+        .attr("height", heightInPx)
+        .attr("fill", function (d) { return color(d.length); })
+        .attr("stroke", "black")
+        .attr("stroke-width", "0.4");
+    }
   </script>
 
 </body>
