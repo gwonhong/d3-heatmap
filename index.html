@@ -102,9 +102,11 @@
         .dy(size)
         (inputForRectBinning);
 
+      console.log(rectbinData);
+
       // Prepare a color palette
       let color = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.y)]) // in proportion to z value
+        .domain([0, d3.max(rectbinData, d => d.length)]) // find maximum amount of the rect.
         .range(["transparent", "#69a3b2"])
 
       // What is the width of a square in px?
