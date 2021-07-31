@@ -16,7 +16,7 @@
 
   <!-- I had to use d3.v4 since rectbin is not compatible with newer version -->
   <script src="https://d3js.org/d3.v4.js"></script>
-  <script src="https://cdn.rawgit.com/fabid/d3-rectbin/master/rectbin.js"></script>
+  <script src="rectbin.js"></script>
 
   <script>
     const div = d3.selectAll("div");
@@ -89,18 +89,20 @@
       svg.append("g")
         .call(d3.axisLeft(y));
 
-      // Reformat the data: d3.rectbin() needs a specific format
-      let inputForRectBinning = [];
-      data.forEach(d => {
-        inputForRectBinning.push([+d.x, +d.y])  // Note that we had the transform value of X and Y !
-      });
+      // // Reformat the data: d3.rectbin() needs a specific format
+      // let inputForRectBinning = [];
+      // data.forEach(d => {
+      //   inputForRectBinning.push([+d.x, +d.y])  // Note that we had the transform value of X and Y !
+      // });
 
       // Compute the rectbin
       let size = 0.5;
       let rectbinData = d3.rectbin()
+        .x(d => d.x) //accessor를 이렇게 지정하는게 더 깔끔한듯. 위에 처럼 미리 가공하지말고
+        .y(d => d.y)
         .dx(size)
         .dy(size)
-        (inputForRectBinning);
+        (data);
 
       console.log(rectbinData);
 
@@ -126,11 +128,11 @@
         .selectAll("myRect")
         .data(rectbinData)
         .enter().append("rect")
-        .attr("x", function (d) { return x(d.x) })
-        .attr("y", function (d) { return y(d.y) - heightInPx })
+        .attr("x", d => x(d.x))
+        .attr("y", d => (y(d.y) - heightInPx))
         .attr("width", widthInPx)
         .attr("height", heightInPx)
-        .attr("fill", function (d) { return color(d.length); })
+        .attr("fill", d => color(d.length))
         .attr("stroke", "black")
         .attr("stroke-width", "0.4");
     }
