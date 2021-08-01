@@ -89,17 +89,12 @@
       svg.append("g")
         .call(d3.axisLeft(y));
 
-      // // Reformat the data: d3.rectbin() needs a specific format
-      // let inputForRectBinning = [];
-      // data.forEach(d => {
-      //   inputForRectBinning.push([+d.x, +d.y])  // Note that we had the transform value of X and Y !
-      // });
-
       // Compute the rectbin
       let size = 0.5;
       let rectbinData = d3.rectbin()
-        .x(d => d.x) //accessor를 이렇게 지정하는게 더 깔끔한듯. 위에 처럼 미리 가공하지말고
+        .x(d => d.x)
         .y(d => d.y)
+        .z(d => d.z)
         .dx(size)
         .dy(size)
         (data);
@@ -108,7 +103,7 @@
 
       // Prepare a color palette
       let color = d3.scaleLinear()
-        .domain([0, d3.max(rectbinData, d => d.length)]) // find maximum amount of the rect.
+        .domain([0, d3.max(rectbinData, d => d.zMax)]) // find maximum amount of the rect.
         .range(["transparent", "#69a3b2"])
 
       // What is the width of a square in px?
@@ -132,7 +127,7 @@
         .attr("y", d => (y(d.y) - heightInPx))
         .attr("width", widthInPx)
         .attr("height", heightInPx)
-        .attr("fill", d => color(d.length))
+        .attr("fill", d => color(d.zMax))
         .attr("stroke", "black")
         .attr("stroke-width", "0.4");
     }

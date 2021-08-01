@@ -49,26 +49,35 @@
             let xRange = d3.range(xExtent[0], xExtent[1] + dx, dx);
             let yRange = d3.range(yExtent[0], yExtent[1] + dy, dy);
 
+            //generate rectbins
             //order of yRange and xRange matters as it changes the x-y axis
             yRange.forEach(Y => {
                 xRange.forEach(X => {
-                    let pj = trunc(Y / dy);
                     let pi = trunc(X / dx);
-                    let id = pi + '-' + pj;
-                    let bin = binsById[id] = [];
+                    let pj = trunc(Y / dy);
+
+                    let bin = [];
                     bin.i = pi;
                     bin.j = pj;
                     bin.x = pi * dx;
                     bin.y = pj * dy;
+                    bin.zMax = 0;
+
+                    let id = pi + '-' + pj;
+                    binsById[id] = bin;
                 });
             });
+
+            //push each points to the bins
             points.forEach((point, i) => {
-                let pj = trunc(y.call(rectbin, point, i) / dy);
                 let pi = trunc(x.call(rectbin, point, i) / dx);
+                let pj = trunc(y.call(rectbin, point, i) / dy);
+                let zCur = z.call(rectbin, point, i);
 
                 let id = pi + '-' + pj;
-                let bin = binsById[id];
-                bin.push(point);
+                binsById[id].push(point);
+                if (zCur > binsById[id].zMax)
+                    binsById[id].zMax = zCur;
             });
             return Object.values(binsById);
         }
@@ -78,6 +87,7 @@
 
 })();
 
+// assume input data is all negative or all positive
 function trunc(x) {
     return x < 0 ? Math.ceil(x) : Math.floor(x);
 }
