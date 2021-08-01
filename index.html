@@ -90,7 +90,7 @@
         .call(d3.axisLeft(y));
 
       // Compute the rectbin
-      let size = 0.5;
+      let size = 0.25; //size가 자유롭게 지정이 안됨.
       let rectbinData = d3.rectbin()
         .x(d => d.x)
         .y(d => d.y)

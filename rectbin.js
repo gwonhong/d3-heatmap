@@ -43,6 +43,7 @@
 
         function rectbin(points) {
             let binsById = {};
+            
             let xExtent = d3.extent(points, (d, i) => x.call(rectbin, d, i));
             let yExtent = d3.extent(points, (d, i) => y.call(rectbin, d, i));
 
@@ -53,8 +54,8 @@
             //order of yRange and xRange matters as it changes the x-y axis
             yRange.forEach(Y => {
                 xRange.forEach(X => {
-                    let pi = trunc(X / dx);
-                    let pj = trunc(Y / dy);
+                    let pi = Math.floor(X / dx);
+                    let pj = Math.floor(Y / dy);
 
                     let bin = [];
                     bin.i = pi;
@@ -70,8 +71,8 @@
 
             //push each points to the bins
             points.forEach((point, i) => {
-                let pi = trunc(x.call(rectbin, point, i) / dx);
-                let pj = trunc(y.call(rectbin, point, i) / dy);
+                let pi = Math.floor(x.call(rectbin, point, i) / dx);
+                let pj = Math.floor(y.call(rectbin, point, i) / dy);
                 let zCur = z.call(rectbin, point, i);
 
                 let id = pi + '-' + pj;
@@ -86,8 +87,3 @@
     };
 
 })();
-
-// assume input data is all negative or all positive
-function trunc(x) {
-    return x < 0 ? Math.ceil(x) : Math.floor(x);
-}
