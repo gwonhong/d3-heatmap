@@ -42,7 +42,7 @@
         let option4 = document.createElement("button");
         option4.innerHTML = "heatmap?";
         option4.addEventListener("click", () => {
-          drawHeatmap(randomArray);
+          drawHeatmap(randomArray, 4);
         });
         options.appendChild(option4);
       }
@@ -65,7 +65,7 @@
       .attr("transform",
         `translate(${margin.left},${margin.top})`);
 
-    function drawHeatmap(data) {
+    function drawHeatmap(data, stepSize) {
 
       let xExtent = d3.extent(data, d => d.x);
       let yExtent = d3.extent(data, d => d.y);
@@ -90,13 +90,12 @@
         .call(d3.axisLeft(y));
 
       // Compute the rectbin
-      let size = 2; //size가 자유롭게 지정이 안됨.
       let rectbinData = d3.rectbin()
         .x(d => d.x)
         .y(d => d.y)
         .z(d => d.z)
-        .dx(size)
-        .dy(size)
+        .dx(stepSize)
+        .dy(stepSize)
         (data);
 
       console.log(rectbinData);
@@ -107,10 +106,10 @@
         .interpolator(d3.interpolateViridis);
 
       // What is the width of a square in px?
-      let widthInPx = x(xExtent[0] + size);
+      let widthInPx = x(xExtent[0] + stepSize);
 
       // What is the height of a square in px?
-      let heightInPx = y(yExtent[1] - size);
+      let heightInPx = y(yExtent[1] - stepSize);
 
       // Now we can add the squares
       svg.append("clipPath")
@@ -127,7 +126,7 @@
         .attr("y", d => (y(d.y) - heightInPx))
         .attr("width", widthInPx)
         .attr("height", heightInPx)
-        .attr("fill", d => { return d.zMax === 0 ? "transparent" : color(d.zMax) })
+        .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
         .attr("stroke", "transparent")
         .attr("stroke-width", "0.4");
     }
