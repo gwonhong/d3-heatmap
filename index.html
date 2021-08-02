@@ -127,7 +127,7 @@
         .attr("y", d => (y(d.y) - heightInPx))
         .attr("width", widthInPx)
         .attr("height", heightInPx)
-        .attr("fill", d => color(d.zMax))
+        .attr("fill", d => { return d.zMax === 0 ? "transparent" : color(d.zMax) })
         .attr("stroke", "transparent")
         .attr("stroke-width", "0.4");
     }
