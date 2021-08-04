@@ -14,11 +14,9 @@
   <!-- graph will take place here -->
   <div id="graph"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="rectbin.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3-scale-chromatic@3">//for color scaling</script>
-
-  <script>
+  <script type="module">
+    import * as d3 from "https://cdn.skypack.dev/d3@7";
+    import * as rectbin from "./rectbin.js";
     const div = d3.selectAll("div");
 
     //generate random 3d array with 100 elements
@@ -90,7 +88,7 @@
         .call(d3.axisLeft(y));
 
       // Compute the rectbin
-      let rectbinData = d3.rectbin()
+      let rectbinData = rectbin()
         .x(d => d.x)
         .y(d => d.y)
         .z(d => d.z)
@@ -101,9 +99,8 @@
       console.log(rectbinData);
 
       // Prepare a color palette
-      let color = d3.scaleSequential()
-        .domain([0, d3.max(rectbinData, d => d.zMax)]) // find maximum amount of the rect.
-        .interpolator(d3.interpolateViridis);
+      let color = d3.scaleSequential(d3.interpolateViridis)
+        .domain([0, d3.max(rectbinData, d => d.zMax)]); // find maximum amount of the rect.
 
       // What is the width of a square in px?
       let widthInPx = x(xExtent[0] + stepSize);
