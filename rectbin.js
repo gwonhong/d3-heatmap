@@ -14,7 +14,7 @@
         rectbin.dx = function (_) {
             if (!arguments.length) return dx;
             dx = _;
-            return rectbin;
+            return rectbin; //chaining을 위한 return!
         };
 
         rectbin.dy = function (_) {
