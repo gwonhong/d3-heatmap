@@ -11,39 +11,9 @@
             y = rectbinY,
             z = rectbinZ;
 
-        rectbin.dx = function (_) {
-            if (!arguments.length) return dx;
-            dx = _;
-            return rectbin; //chaining을 위한 return!
-        };
-
-        rectbin.dy = function (_) {
-            if (!arguments.length) return dy;
-            dy = _;
-            return rectbin;
-        };
-
-        rectbin.x = function (_) {
-            if (!arguments.length) return x;
-            x = _;
-            return rectbin;
-        };
-
-        rectbin.y = function (_) {
-            if (!arguments.length) return y;
-            y = _;
-            return rectbin;
-        };
-
-        rectbin.z = function (_) {
-            if (!arguments.length) return z;
-            z = _;
-            return rectbin;
-        };
-
         function rectbin(points) {
             let binsById = {};
-            
+
             let xExtent = d3.extent(points, (d, i) => x.call(rectbin, d, i));
             let yExtent = d3.extent(points, (d, i) => y.call(rectbin, d, i));
 
@@ -81,7 +51,37 @@
                     binsById[id].zMax = zCur;
             });
             return Object.values(binsById);
-        }
+        };
+
+        rectbin.dx = function (_) {
+            if (!arguments.length) return dx;
+            dx = _;
+            return rectbin; //chaining을 위한 return
+        };
+
+        rectbin.dy = function (_) {
+            if (!arguments.length) return dy;
+            dy = _;
+            return rectbin;
+        };
+
+        rectbin.x = function (_) {
+            if (!arguments.length) return x;
+            x = _;
+            return rectbin;
+        };
+
+        rectbin.y = function (_) {
+            if (!arguments.length) return y;
+            y = _;
+            return rectbin;
+        };
+
+        rectbin.z = function (_) {
+            if (!arguments.length) return z;
+            z = _;
+            return rectbin;
+        };
 
         return rectbin;
     };
