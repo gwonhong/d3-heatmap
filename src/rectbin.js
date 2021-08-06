@@ -1,8 +1,10 @@
+import * as d3 from "https://cdn.skypack.dev/d3@7";
+
 let rectbinX = d => d[0],
     rectbinY = d => d[1],
     rectbinZ = d => d[2];
 
-export default function () {
+let rectbin = function () {
     let dx = 0.1,
         dy = 0.1,
         x = rectbinX,
@@ -54,7 +56,7 @@ export default function () {
     rectbin.dx = function (_) {
         if (!arguments.length) return dx;
         dx = _;
-        return rectbin; //chaining을 위한 return
+        return rectbin;
     };
 
     rectbin.dy = function (_) {
@@ -83,3 +85,5 @@ export default function () {
 
     return rectbin;
 };
+
+export {rectbin};
