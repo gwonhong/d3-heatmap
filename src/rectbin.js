@@ -86,4 +86,4 @@ let rectbin = function () {
     return rectbin;
 };
 
-export {rectbin};
+export { rectbin };

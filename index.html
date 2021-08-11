@@ -3,12 +3,10 @@
 
 <head>
   <meta charset="utf-8">
-  <title>d3 Heatmap</title>
+  <title>d3.heatmap</title>
 </head>
 
 <body>
-  <!-- make random array with 100 numbers -->
-  <button id="random">Generate random 3d array</button><br>
   <div id="options"></div>
 
   <!-- graph will take place here -->
@@ -19,32 +17,26 @@
     import { rectbin } from "./src/rectbin.js";
     const div = d3.selectAll("div");
 
-    //generate random 3d array with 100 elements
-    let randomArray = [];
-    let randomButton = document.getElementById("random");
-    let isFirst = true;
-    randomButton.addEventListener("click", () => {
-      for (let i = 0; i < 1000; i++) {
-        let x = Math.floor(Math.random() * 1000) / 10; //0~100의 무작위 한자리 소수
-        let y = Math.floor(Math.random() * 1000) / 10;
-        let z = Math.floor(Math.random() * 1000) / 10;
-        randomArray.push({ x, y, z });
-      }
-      console.log(randomArray);
+    // read local json file
+    let object;
+    let httpRequest = new XMLHttpRequest(); // asynchronous request
+    httpRequest.open("GET", "./result.json", true);
+    httpRequest.send();
+    httpRequest.addEventListener("readystatechange", function () {
+      if (this.readyState === this.DONE) {
+        // when the request has completed
+        object = JSON.parse(this.response);
+        console.log(object);
 
-
-      if (isFirst) {
-        //make buttons to select graph option
         let options = document.getElementById("options");
 
-        let option4 = document.createElement("button");
-        option4.innerHTML = "Generate Heatmap";
-        option4.addEventListener("click", () => {
-          drawHeatmap(randomArray, 4);
+        let heatmapButton = document.createElement("button");
+        heatmapButton.innerHTML = "Generate Heatmap";
+        heatmapButton.addEventListener("click", () => {
+          drawHeatmap(object, 1000000, 100);
         });
-        options.appendChild(option4);
+        options.appendChild(heatmapButton);
       }
-      isFirst = false;
     });
 
 
@@ -63,10 +55,14 @@
       .attr("transform",
         `translate(${margin.left},${margin.top})`);
 
-    function drawHeatmap(data, stepSize) {
+    function drawHeatmap(data, stepX, stepY) {
+      let funcX = d => d.trainable_parameters,
+        funcY = d => d.training_time,
+        funcZ = d => d.test_accuracy;
 
-      let xExtent = d3.extent(data, d => d.x);
-      let yExtent = d3.extent(data, d => d.y);
+      let xExtent = d3.extent(data, funcX),
+        yExtent = d3.extent(data, funcY),
+        zExtent = d3.extent(data, funcZ);
 
       //X axis
       let x = d3.scaleLinear()
@@ -89,24 +85,24 @@
 
       // Compute the rectbin
       let rectbinData = rectbin()
-        .x(d => d.x)
-        .y(d => d.y)
-        .z(d => d.z)
-        .dx(stepSize)
-        .dy(stepSize)
+        .x(funcX)
+        .y(funcY)
+        .z(funcZ)
+        .dx(stepX)
+        .dy(stepY)
         (data);
 
       console.log(rectbinData);
 
       // Prepare a color palette
       let color = d3.scaleSequential(d3.interpolateViridis)
-        .domain([0, d3.max(rectbinData, d => d.zMax)]); // find maximum amount of the rect.
+        .domain(zExtent); // find maximum amount of the rect.
 
       // What is the width of a square in px?
-      let widthInPx = x(xExtent[0] + stepSize);
+      let widthInPx = x(xExtent[0] + stepX);
 
       // What is the height of a square in px?
-      let heightInPx = y(yExtent[1] - stepSize);
+      let heightInPx = y(yExtent[1] - stepY);
 
       // Now we can add the squares
       svg.append("clipPath")
