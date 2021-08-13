@@ -14,8 +14,8 @@ let rectbin = function () {
     function rectbin(points) {
         let binsById = {};
 
-        let xExtent = d3.extent(points, (d, i) => x.call(rectbin, d, i));
-        let yExtent = d3.extent(points, (d, i) => y.call(rectbin, d, i));
+        let xExtent = d3.extent(points, x);
+        let yExtent = d3.extent(points, y);
 
         let xRange = d3.range(xExtent[0], xExtent[1] + dx, dx);
         let yRange = d3.range(yExtent[0], yExtent[1] + dy, dy);
@@ -40,10 +40,10 @@ let rectbin = function () {
         });
 
         //push each points to the bins
-        points.forEach((point, i) => {
-            let pi = Math.floor(x.call(rectbin, point, i) / dx);
-            let pj = Math.floor(y.call(rectbin, point, i) / dy);
-            let zCur = z.call(rectbin, point, i);
+        points.forEach(point => {
+            let pi = Math.floor(x.call(rectbin, point) / dx);
+            let pj = Math.floor(y.call(rectbin, point) / dy);
+            let zCur = z.call(rectbin, point);
 
             let id = pi + '-' + pj;
             binsById[id].push(point);

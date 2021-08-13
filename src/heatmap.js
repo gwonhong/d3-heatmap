@@ -1,7 +1,7 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 import { rectbin } from "./rectbin.js";
 
-const margin = { top: 10, right: 30, bottom: 30, left: 40 },
+const margin = { top: 10, right: 30, bottom: 30, left: 60 },
     width = 800,
     height = 400;
 
@@ -25,8 +25,8 @@ let heatmap = function () {
             yExtent = d3.extent(data, y),
             zExtent = d3.extent(data, z);
 
-        let dx = Math.round((xExtent[1]-xExtent[0])/splitX),
-            dy = Math.round((yExtent[1]-yExtent[0])/splitY);
+        let dx = ((xExtent[1] - xExtent[0]) / splitX),
+            dy = ((yExtent[1] - yExtent[0]) / splitY);
 
         let xScale = d3.scaleLinear()
             .nice()
@@ -57,7 +57,7 @@ let heatmap = function () {
             .dy(dy)
             (data);
 
-        // size of sqaures
+        // size of squares
         let widthInPx = xScale(xExtent[0] + dx) - margin.left,
             heightInPx = yScale(yExtent[1] - dy) - margin.top;
 
@@ -78,16 +78,17 @@ let heatmap = function () {
 
         svg.append("g")
             .attr("clip-path", "url(#clip)")
-            .selectAll("myRect")
+            .selectAll()
             .data(rectbinData)
-            .enter().append("rect")
+            .enter()
+            .append("rect")
             .attr("x", d => xScale(d.x))
             .attr("y", d => (yScale(d.y) - heightInPx))
             .attr("width", widthInPx)
             .attr("height", heightInPx)
             .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
-            .attr("stroke", "transparent")
-            .attr("stroke-width", "0.4");
+            .attr("stroke", "black")
+            .attr("stroke-width", "0.2");
 
         return svg.node();
     };
