@@ -10,8 +10,8 @@ let funcX = d => d[0],
     funcZ = d => d[2];
 
 let heatmap = function () {
-    let dx = 0.1,
-        dy = 0.1,
+    let splitX = 100,
+        splitY = 100,
         x = funcX,
         y = funcY,
         z = funcZ;
@@ -24,6 +24,9 @@ let heatmap = function () {
         let xExtent = d3.extent(data, x),
             yExtent = d3.extent(data, y),
             zExtent = d3.extent(data, z);
+
+        let dx = Math.round((xExtent[1]-xExtent[0])/splitX),
+            dy = Math.round((yExtent[1]-yExtent[0])/splitY);
 
         let xScale = d3.scaleLinear()
             .nice()
@@ -89,15 +92,15 @@ let heatmap = function () {
         return svg.node();
     };
 
-    heatmap.dx = function (_) {
-        if (!arguments.length) return dx;
-        dx = _;
+    heatmap.splitX = function (_) {
+        if (!arguments.length) return splitX;
+        splitX = _;
         return heatmap;
     };
 
-    heatmap.dy = function (_) {
-        if (!arguments.length) return dy;
-        dy = _;
+    heatmap.splitY = function (_) {
+        if (!arguments.length) return splitY;
+        splitY = _;
         return heatmap;
     };
 

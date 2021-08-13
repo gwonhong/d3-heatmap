@@ -7,7 +7,26 @@
 </head>
 
 <body>
-  <div id="options"></div>
+  <div id="options">
+    <label for="optionX">X축</label>
+    <select id="optionX">
+      <option value=trainable_parameters selected="selected"># of trainable parameters</option>
+      <option value=training_time>training time</option>
+      <option value=test_accuracy>accuracy</option>
+    </select>
+    <label for="optionY">Y축</label>
+    <select id="optionY">
+      <option value=trainable_parameters># of trainable parameters</option>
+      <option value=training_time selected="selected">training time</option>
+      <option value=test_accuracy>accuracy</option>
+    </select>
+    <label for="optionZ">Z축</label>
+    <select id="optionZ">
+      <option value=trainable_parameters># of trainable parameters</option>
+      <option value=training_time>training time</option>
+      <option value=test_accuracy selected="selected">accuracy</option>
+    </select><br>
+  </div>
 
   <!-- graph will take place here -->
   <div id="graph"></div>
@@ -17,12 +36,6 @@
     import { heatmap } from "./src/heatmap.js";
 
     const div = d3.selectAll("div");
-
-    // set the dimensions and margins of the graph
-    const margin = { top: 10, right: 30, bottom: 30, left: 40 },
-      width = 660 - margin.left - margin.right,
-      height = 400 - margin.top - margin.bottom;
-
     const svg = d3.select("#graph");
 
     // read local json file
@@ -31,8 +44,7 @@
     httpRequest.open("GET", "./result.json", true);
     httpRequest.send();
     httpRequest.addEventListener("readystatechange", function () {
-      if (this.readyState === this.DONE) {
-        // when the request has completed
+      if (this.readyState === this.DONE) { // when the request has completed
         object = JSON.parse(this.response);
 
         let options = document.getElementById("options");
@@ -40,12 +52,15 @@
         let heatmapButton = document.createElement("button");
         heatmapButton.innerHTML = "Generate Heatmap";
         heatmapButton.addEventListener("click", () => {
+          let optionX = document.getElementById("optionX"),
+            optionY = document.getElementById("optionY"),
+            optionZ = document.getElementById("optionZ");
           svg.append(() => heatmap()
-            .x(d => d.trainable_parameters)
-            .y(d => d.training_time)
-            .z(d => d.test_accuracy)
-            .dx(1000000)
-            .dy(250)
+            .x(d => d[optionX.value])
+            .y(d => d[optionY.value])
+            .z(d => d[optionZ.value])
+            .splitX(100)
+            .splitY(50)
             (object));
         });
         options.appendChild(heatmapButton);
