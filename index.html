@@ -40,7 +40,13 @@
         let heatmapButton = document.createElement("button");
         heatmapButton.innerHTML = "Generate Heatmap";
         heatmapButton.addEventListener("click", () => {
-          svg.append(() => heatmap(object, 1000000, 250));
+          svg.append(() => heatmap()
+            .x(d => d.trainable_parameters)
+            .y(d => d.training_time)
+            .z(d => d.test_accuracy)
+            .dx(1000000)
+            .dy(250)
+            (object));
         });
         options.appendChild(heatmapButton);
       }

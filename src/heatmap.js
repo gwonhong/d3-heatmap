@@ -5,82 +5,121 @@ const margin = { top: 10, right: 30, bottom: 30, left: 40 },
     width = 800,
     height = 400;
 
-function heatmap(data, stepX, stepY) {
-    let funcX = d => d.trainable_parameters,
-        funcY = d => d.training_time,
-        funcZ = d => d.test_accuracy;
+let funcX = d => d[0],
+    funcY = d => d[1],
+    funcZ = d => d[2];
 
-    let xExtent = d3.extent(data, funcX),
-        yExtent = d3.extent(data, funcY),
-        zExtent = d3.extent(data, funcZ);
+let heatmap = function () {
+    let dx = 0.1,
+        dy = 0.1,
+        x = funcX,
+        y = funcY,
+        z = funcZ;
 
-    // create svg element
-    const svg = d3.create("svg")
-        .attr("viewBox", [0, 0, width, height]);
+    function heatmap(data) {
+        // create svg element
+        const svg = d3.create("svg")
+            .attr("viewBox", [0, 0, width, height]);
 
-    // make space for axis
-    svg.append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
+        let xExtent = d3.extent(data, x),
+            yExtent = d3.extent(data, y),
+            zExtent = d3.extent(data, z);
 
-    let x = d3.scaleLinear()
-        .nice()
-        .domain(xExtent)
-        .range([margin.left, width - margin.right]);
+        let xScale = d3.scaleLinear()
+            .nice()
+            .domain(xExtent)
+            .range([margin.left, width - margin.right]);
 
-    let y = d3.scaleLinear()
-        .nice()
-        .domain(yExtent)
-        .range([height - margin.bottom, margin.top]);
+        let yScale = d3.scaleLinear()
+            .nice()
+            .domain(yExtent)
+            .range([height - margin.bottom, margin.top]);
 
-    let color = d3.scaleSequential(d3.interpolateViridis)
-        .domain(zExtent);
+        let color = d3.scaleSequential(d3.interpolateViridis)
+            .domain(zExtent);
 
-    let xAxis = g => g
-        .attr("transform", `translate(0, ${height - margin.bottom})`)
-        .call(d3.axisBottom(x));
+        let xAxis = g => g
+            .attr("transform", `translate(0, ${height - margin.bottom})`)
+            .call(d3.axisBottom(xScale));
 
-    let yAxis = g => g
-        .attr("transform", `translate(${margin.left}, 0)`)
-        .call(d3.axisLeft(y));
+        let yAxis = g => g
+            .attr("transform", `translate(${margin.left}, 0)`)
+            .call(d3.axisLeft(yScale));
 
-    svg.append("g")
-        .call(xAxis);
+        let rectbinData = rectbin()
+            .x(x)
+            .y(y)
+            .z(z)
+            .dx(dx)
+            .dy(dy)
+            (data);
 
-    svg.append("g")
-        .call(yAxis);
+        // size of sqaures
+        let widthInPx = xScale(xExtent[0] + dx) - margin.left,
+            heightInPx = yScale(yExtent[1] - dy) - margin.top;
 
-    let rectbinData = rectbin()
-        .x(funcX)
-        .y(funcY)
-        .z(funcZ)
-        .dx(stepX)
-        .dy(stepY)
-        (data);
+        svg.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // size of sqaures
-    let widthInPx = x(xExtent[0] + stepX) - margin.left,
-        heightInPx = y(yExtent[1] - stepY) - margin.top;
+        svg.append("g")
+            .call(xAxis);
 
-    svg.append("clipPath")
-        .attr("id", "clip")
-        .append("rect")
-        .attr("width", width)
-        .attr("height", height);
+        svg.append("g")
+            .call(yAxis);
 
-    svg.append("g")
-        .attr("clip-path", "url(#clip)")
-        .selectAll("myRect")
-        .data(rectbinData)
-        .enter().append("rect")
-        .attr("x", d => x(d.x))
-        .attr("y", d => (y(d.y) - heightInPx))
-        .attr("width", widthInPx)
-        .attr("height", heightInPx)
-        .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
-        .attr("stroke", "transparent")
-        .attr("stroke-width", "0.4");
+        svg.append("clipPath")
+            .attr("id", "clip")
+            .append("rect")
+            .attr("width", width)
+            .attr("height", height);
 
-    return svg.node();
-}
+        svg.append("g")
+            .attr("clip-path", "url(#clip)")
+            .selectAll("myRect")
+            .data(rectbinData)
+            .enter().append("rect")
+            .attr("x", d => xScale(d.x))
+            .attr("y", d => (yScale(d.y) - heightInPx))
+            .attr("width", widthInPx)
+            .attr("height", heightInPx)
+            .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
+            .attr("stroke", "transparent")
+            .attr("stroke-width", "0.4");
+
+        return svg.node();
+    };
+
+    heatmap.dx = function (_) {
+        if (!arguments.length) return dx;
+        dx = _;
+        return heatmap;
+    };
+
+    heatmap.dy = function (_) {
+        if (!arguments.length) return dy;
+        dy = _;
+        return heatmap;
+    };
+
+    heatmap.x = function (_) {
+        if (!arguments.length) return x;
+        x = _;
+        return heatmap;
+    };
+
+    heatmap.y = function (_) {
+        if (!arguments.length) return y;
+        y = _;
+        return heatmap;
+    };
+
+    heatmap.z = function (_) {
+        if (!arguments.length) return z;
+        z = _;
+        return heatmap;
+    };
+
+    return heatmap;
+};
 
 export { heatmap };
