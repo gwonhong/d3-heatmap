@@ -1,15 +1,15 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 
-let rectbinX = d => d[0],
-    rectbinY = d => d[1],
-    rectbinZ = d => d[2];
+let funcX = d => d[0],
+    funcY = d => d[1],
+    funcZ = d => d[2];
 
 let rectbin = function () {
     let dx = 0.1,
         dy = 0.1,
-        x = rectbinX,
-        y = rectbinY,
-        z = rectbinZ;
+        x = funcX,
+        y = funcY,
+        z = funcZ;
 
     function rectbin(points) {
         let binsById = {};

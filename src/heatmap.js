@@ -1,18 +1,11 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 import { rectbin } from "./rectbin.js";
 
-// set the dimensions and margins of the graph
 const margin = { top: 10, right: 30, bottom: 30, left: 40 },
-    width = 660 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    width = 800,
+    height = 400;
 
-function drawHeatmap(svg, data, stepX, stepY) {
-    svg.attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-        .attr("transform",
-            `translate(${margin.left},${margin.top})`);
-
+function heatmap(data, stepX, stepY) {
     let funcX = d => d.trainable_parameters,
         funcY = d => d.training_time,
         funcZ = d => d.test_accuracy;
@@ -21,26 +14,41 @@ function drawHeatmap(svg, data, stepX, stepY) {
         yExtent = d3.extent(data, funcY),
         zExtent = d3.extent(data, funcZ);
 
-    //X axis
+    // create svg element
+    const svg = d3.create("svg")
+        .attr("viewBox", [0, 0, width, height]);
+
+    // make space for axis
+    svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
     let x = d3.scaleLinear()
         .nice()
         .domain(xExtent)
-        .range([0, width]);
+        .range([margin.left, width - margin.right]);
 
-    svg.append("g")
-        .attr("transform", `translate(0, ${height})`)
-        .call(d3.axisBottom(x));
-
-    //Y axis
     let y = d3.scaleLinear()
         .nice()
         .domain(yExtent)
-        .range([height, 0]);
+        .range([height - margin.bottom, margin.top]);
 
-    svg.append("g")
+    let color = d3.scaleSequential(d3.interpolateViridis)
+        .domain(zExtent);
+
+    let xAxis = g => g
+        .attr("transform", `translate(0, ${height - margin.bottom})`)
+        .call(d3.axisBottom(x));
+
+    let yAxis = g => g
+        .attr("transform", `translate(${margin.left}, 0)`)
         .call(d3.axisLeft(y));
 
-    // Compute the rectbin
+    svg.append("g")
+        .call(xAxis);
+
+    svg.append("g")
+        .call(yAxis);
+
     let rectbinData = rectbin()
         .x(funcX)
         .y(funcY)
@@ -49,22 +57,16 @@ function drawHeatmap(svg, data, stepX, stepY) {
         .dy(stepY)
         (data);
 
-    // Prepare a color palette
-    let color = d3.scaleSequential(d3.interpolateViridis)
-        .domain(zExtent); // find maximum amount of the rect.
+    // size of sqaures
+    let widthInPx = x(xExtent[0] + stepX) - margin.left,
+        heightInPx = y(yExtent[1] - stepY) - margin.top;
 
-    // What is the width of a square in px?
-    let widthInPx = x(xExtent[0] + stepX);
-
-    // What is the height of a square in px?
-    let heightInPx = y(yExtent[1] - stepY);
-
-    // Now we can add the squares
     svg.append("clipPath")
         .attr("id", "clip")
         .append("rect")
         .attr("width", width)
-        .attr("height", height)
+        .attr("height", height);
+
     svg.append("g")
         .attr("clip-path", "url(#clip)")
         .selectAll("myRect")
@@ -77,6 +79,8 @@ function drawHeatmap(svg, data, stepX, stepY) {
         .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
         .attr("stroke", "transparent")
         .attr("stroke-width", "0.4");
+
+    return svg.node();
 }
 
-export { drawHeatmap };
+export { heatmap };

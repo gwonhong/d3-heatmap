@@ -14,11 +14,16 @@
 
   <script type="module">
     import * as d3 from "https://cdn.skypack.dev/d3@7";
-    import { drawHeatmap } from "./src/heatmap.js";
+    import { heatmap } from "./src/heatmap.js";
 
     const div = d3.selectAll("div");
 
-    const svg = d3.select("#graph").append("svg");
+    // set the dimensions and margins of the graph
+    const margin = { top: 10, right: 30, bottom: 30, left: 40 },
+      width = 660 - margin.left - margin.right,
+      height = 400 - margin.top - margin.bottom;
+
+    const svg = d3.select("#graph");
 
     // read local json file
     let object;
@@ -35,7 +40,7 @@
         let heatmapButton = document.createElement("button");
         heatmapButton.innerHTML = "Generate Heatmap";
         heatmapButton.addEventListener("click", () => {
-          drawHeatmap(svg, object, 100000, 50);
+          svg.append(() => heatmap(object, 1000000, 250));
         });
         options.appendChild(heatmapButton);
       }
