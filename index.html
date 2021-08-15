@@ -31,13 +31,15 @@
 
   <!-- graph will take place here -->
   <div id="graph"></div>
+  <div id="tooltip"></div>
 
   <script type="module">
     import * as d3 from "https://cdn.skypack.dev/d3@7";
     import { heatmap } from "./src/heatmap.js";
 
     const div = d3.selectAll("div");
-    const svg = d3.select("#graph");
+    const svgA = d3.select("#graph");
+    const svgB = d3.select("#tooltip");
 
     // read local json file
     let data;
@@ -56,13 +58,17 @@
           let optionX = document.getElementById("optionX"),
             optionY = document.getElementById("optionY"),
             optionZ = document.getElementById("optionZ");
-          svg.append(() => heatmap()
+
+          let heatmapResult = heatmap()
             .x(d => d[optionX.value])
             .y(d => d[optionY.value])
             .z(d => d[optionZ.value])
-            .splitX(100)
-            .splitY(50)
-            (data));
+            .splitX(50)
+            .splitY(25)
+            (data);
+          console.log(heatmapResult);
+          svgA.append(() => heatmapResult[0]);
+          svgB.append(() => heatmapResult[1]);
         });
         options.appendChild(heatmapButton);
       }

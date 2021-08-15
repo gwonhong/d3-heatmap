@@ -1,7 +1,7 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7";
 import { rectbin } from "./rectbin.js";
 
-const margin = { top: 10, right: 30, bottom: 30, left: 60 },
+const margin = { top: 20, right: 40, bottom: 30, left: 60 },
     width = 800,
     height = 400;
 
@@ -61,6 +61,31 @@ let heatmap = function () {
         let widthInPx = xScale(xExtent[0] + dx) - margin.left,
             heightInPx = yScale(yExtent[1] - dy) - margin.top;
 
+        // create a tooltip
+        const tooltip = d3.create("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0)
+            .style("position", "fixed")
+            .style("background-color", "white")
+            .style("border", "solid")
+            .style("border-width", "2px")
+            .style("border-radius", "5px")
+            .style("padding", "5px");
+
+        // Three function that change the tooltip when user hover / move / leave a cell
+        const mouseover = function (event, d) {
+            tooltip.style("opacity", 1)
+        }
+        const mousemove = function (event, d) {
+            tooltip
+                .html("The largest z value among this cell is: " + d.zMax)
+                .style("top", (event.y) + "px")
+                .style("left", (event.x + 10) + "px");
+        }
+        const mouseleave = function (event, d) {
+            tooltip.style("opacity", 0)
+        }
+
         svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -88,9 +113,12 @@ let heatmap = function () {
             .attr("height", heightInPx)
             .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
             .attr("stroke", "black")
-            .attr("stroke-width", "0.2");
+            .attr("stroke-width", "0.2")
+            .on("mouseover", mouseover)
+            .on("mousemove", mousemove)
+            .on("mouseleave", mouseleave);
 
-        return svg.node();
+        return [svg.node(), tooltip.node()];
     };
 
     heatmap.splitX = function (_) {
