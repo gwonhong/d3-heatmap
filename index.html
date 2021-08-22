@@ -38,8 +38,8 @@
     import { heatmap } from "./src/heatmap.js";
 
     const div = d3.selectAll("div");
-    const svgA = d3.select("#graph");
-    const svgB = d3.select("#tooltip");
+    const graph = d3.select("#graph");
+    const tooltip = d3.select("#tooltip");
 
     // read local json file
     let data;
@@ -64,11 +64,10 @@
             .y(d => d[optionY.value])
             .z(d => d[optionZ.value])
             .splitX(50)
-            .splitY(25)
+            .splitY(30)
             (data);
-          console.log(heatmapResult);
-          svgA.append(() => heatmapResult[0]);
-          svgB.append(() => heatmapResult[1]);
+          graph.append(() => heatmapResult[0]);
+          tooltip.append(() => heatmapResult[1]);
         });
         options.appendChild(heatmapButton);
       }

@@ -1,8 +1,7 @@
 import * as d3 from "https://cdn.skypack.dev/d3@7";
-import { rectbin } from "./rectbin.js";
 
-const margin = { top: 20, right: 40, bottom: 30, left: 60 },
-    width = 800,
+const margin = { top: 30, right: 60, bottom: 30, left: 60 },
+    width = 700,
     height = 400;
 
 let funcX = d => d[0],
@@ -17,29 +16,30 @@ let heatmap = function () {
         z = funcZ;
 
     function heatmap(data) {
-        // create svg element
-        const svg = d3.create("svg")
+        const graph = d3.create("svg")
             .attr("viewBox", [0, 0, width, height]);
 
-        let xExtent = d3.extent(data, x),
-            yExtent = d3.extent(data, y),
-            zExtent = d3.extent(data, z);
-
-        let dx = ((xExtent[1] - xExtent[0]) / splitX),
-            dy = ((yExtent[1] - yExtent[0]) / splitY);
+        let xExtent = [0, d3.max(data, x)],
+            yExtent = [0, d3.max(data, y)];
+        console.log(yExtent);
 
         let xScale = d3.scaleLinear()
-            .nice()
             .domain(xExtent)
-            .range([margin.left, width - margin.right]);
+            .range([margin.left, width - margin.right])
+            .nice();
+
+        xExtent = xScale.domain();
 
         let yScale = d3.scaleLinear()
-            .nice()
             .domain(yExtent)
-            .range([height - margin.bottom, margin.top]);
+            .range([height - margin.bottom, margin.top])
+            .nice();
 
-        let color = d3.scaleSequential(d3.interpolateViridis)
-            .domain(zExtent);
+        yExtent = yScale.domain();
+        console.log(yExtent);
+
+        let dx = xExtent[1] / splitX,
+            dy = yExtent[1] / splitY;
 
         let xAxis = g => g
             .attr("transform", `translate(0, ${height - margin.bottom})`)
@@ -49,13 +49,46 @@ let heatmap = function () {
             .attr("transform", `translate(${margin.left}, 0)`)
             .call(d3.axisLeft(yScale));
 
-        let rectbinData = rectbin()
-            .x(x)
-            .y(y)
-            .z(z)
-            .dx(dx)
-            .dy(dy)
-            (data);
+        // generate rectbin
+        let binsById = {};
+        let xRange = d3.range(xExtent[0], xExtent[1] + dx, dx),
+            yRange = d3.range(yExtent[0], yExtent[1] + dy, dy);
+        yRange.forEach(Y => {
+            xRange.forEach(X => {
+                let pi = Math.floor(X / dx);
+                let pj = Math.floor(Y / dy);
+
+                let bin = [];
+                bin.i = pi;
+                bin.j = pj;
+                bin.x = pi * dx;
+                bin.y = pj * dy;
+                bin.zMax = 0;
+
+                let id = pi + '-' + pj;
+                binsById[id] = bin;
+            });
+        });
+
+        //push each points to the bins
+        data.forEach(point => {
+            let pi = Math.floor(x.call(heatmap, point) / dx);
+            let pj = Math.floor(y.call(heatmap, point) / dy);
+            let zCur = z.call(heatmap, point);
+
+            let id = pi + '-' + pj;
+            binsById[id].push(point);
+            if (zCur > binsById[id].zMax) {
+                binsById[id].zMax = zCur;
+                binsById[id].hash = point.unique_hash; //hash of max point for each bins
+            }
+        });
+
+        let rectbinData = Object.values(binsById);
+
+        let zExtent = d3.extent(rectbinData.map(d => d.zMax).filter(d => d !== 0));
+        let color = d3.scaleSequential(d3.interpolateViridis)
+            .domain(zExtent);
 
         // size of squares
         let widthInPx = xScale(xExtent[0] + dx) - margin.left,
@@ -70,55 +103,56 @@ let heatmap = function () {
             .style("border", "solid")
             .style("border-width", "2px")
             .style("border-radius", "5px")
-            .style("padding", "5px");
+            .style("padding", "5px")
+            .style("font-size", "10px");
 
         // Three function that change the tooltip when user hover / move / leave a cell
         const mouseover = function (event, d) {
-            tooltip.style("opacity", 1)
-        }
+            tooltip.style("opacity", 1);
+        };
         const mousemove = function (event, d) {
             tooltip
-                .html("The largest z value among this cell is: " + d.zMax)
+                .html("bin.i: " + d.i + " bin.x: " + d.x + "<br>bin.j: " + d.j + " bin.y: " + d.y)
                 .style("top", (event.y) + "px")
                 .style("left", (event.x + 10) + "px");
-        }
+        };
         const mouseleave = function (event, d) {
-            tooltip.style("opacity", 0)
-        }
+            tooltip.style("opacity", 0);
+        };
 
-        svg.append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        svg.append("g")
+        graph.append("g")
             .call(xAxis);
 
-        svg.append("g")
+        graph.append("g")
             .call(yAxis);
 
-        svg.append("clipPath")
+        graph.append("g")
+            .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        graph.append("clipPath")
             .attr("id", "clip")
             .append("rect")
-            .attr("width", width)
-            .attr("height", height);
+            .attr("width", width - margin.right)
+            .attr("height", height - margin.bottom);
 
-        svg.append("g")
+        graph.append("g")
             .attr("clip-path", "url(#clip)")
             .selectAll()
             .data(rectbinData)
             .enter()
             .append("rect")
             .attr("x", d => xScale(d.x))
-            .attr("y", d => (yScale(d.y) - heightInPx))
+            .attr("y", d => yScale(d.y))
             .attr("width", widthInPx)
             .attr("height", heightInPx)
             .attr("fill", d => { return d.length === 0 ? "transparent" : color(d.zMax) }) //make visible only when there is an element
-            .attr("stroke", "black")
+            .attr("stroke", "grey")
             .attr("stroke-width", "0.2")
             .on("mouseover", mouseover)
             .on("mousemove", mousemove)
             .on("mouseleave", mouseleave);
 
-        return [svg.node(), tooltip.node()];
+        return [graph.node(), tooltip.node()];
     };
 
     heatmap.splitX = function (_) {
