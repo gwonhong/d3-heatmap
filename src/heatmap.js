@@ -21,7 +21,6 @@ let heatmap = function () {
 
         let xExtent = [0, d3.max(data, x)],
             yExtent = [0, d3.max(data, y)];
-        console.log(yExtent);
 
         let xScale = d3.scaleLinear()
             .domain(xExtent)
@@ -36,7 +35,6 @@ let heatmap = function () {
             .nice();
 
         yExtent = yScale.domain();
-        console.log(yExtent);
 
         let dx = xExtent[1] / splitX,
             dy = yExtent[1] / splitY;
@@ -72,9 +70,9 @@ let heatmap = function () {
 
         //push each points to the bins
         data.forEach(point => {
-            let pi = Math.floor(x.call(heatmap, point) / dx);
-            let pj = Math.floor(y.call(heatmap, point) / dy);
-            let zCur = z.call(heatmap, point);
+            let pi = Math.floor(x(point) / dx);
+            let pj = Math.floor(y(point) / dy);
+            let zCur = z(point);
 
             let id = pi + '-' + pj;
             binsById[id].push(point);
@@ -119,6 +117,9 @@ let heatmap = function () {
         const mouseleave = function (event, d) {
             tooltip.style("opacity", 0);
         };
+        const click = function (event, d) {
+            console.log("unique hash: " + d.hash);
+        }
 
         graph.append("g")
             .call(xAxis);
@@ -150,7 +151,8 @@ let heatmap = function () {
             .attr("stroke-width", "0.2")
             .on("mouseover", mouseover)
             .on("mousemove", mousemove)
-            .on("mouseleave", mouseleave);
+            .on("mouseleave", mouseleave)
+            .on("click", click);
 
         return [graph.node(), tooltip.node()];
     };
